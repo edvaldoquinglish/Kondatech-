@@ -1,0 +1,6 @@
+{
+  "name": "Konda Tech",
+  "description": "Plataforma de comunidade profissional tech e marketplace freelancer conectando desenvolvedores verificados a clientes com escrow, chat real-time, reputação e geração de relatórios PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

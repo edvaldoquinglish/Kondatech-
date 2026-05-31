@@ -1,0 +1,177 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Custom verified profile schema for clients, freelancers, and administrators.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "firebase_uid": { "type": "string" },
+        "role": { "type": "string", "enum": ["client", "freelancer", "admin"] },
+        "verified": { "type": "boolean" },
+        "admin": { "type": "boolean" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "reputation": { "type": "number" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "role", "verified", "admin", "created_at"]
+    },
+    "Profile": {
+      "title": "Professional Portfolio",
+      "description": "Professional record containing developer skills, portolio descriptions, and links.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "username": { "type": "string" },
+        "skills": { "type": "array" },
+        "portfolio": { "type": "string" },
+        "experience": { "type": "string" },
+        "github": { "type": "string" },
+        "linkedin": { "type": "string" }
+      },
+      "required": ["id", "user_id", "username"]
+    },
+    "Project": {
+      "title": "Project Listing",
+      "description": "Freelance project job post created by a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "client_name": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "budget": { "type": "number" },
+        "deadline": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "active", "completed", "disputed"] },
+        "freelancer_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "client_id", "client_name", "title", "description", "category", "budget", "status", "created_at"]
+    },
+    "Proposal": {
+      "title": "Freelancer Bid",
+      "description": "Project proposal sent by a verified freelancer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "project_id": { "type": "string" },
+        "project_title": { "type": "string" },
+        "freelancer_id": { "type": "string" },
+        "freelancer_name": { "type": "string" },
+        "price": { "type": "number" },
+        "deadline": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "project_id", "freelancer_id", "price", "deadline", "message", "status", "created_at"]
+    },
+    "Review": {
+      "title": "Rating & Review feedback",
+      "description": "Post-project review to adjust user reputation level.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "project_id": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "reviewer_id": { "type": "string" },
+        "reviewer_name": { "type": "string" },
+        "target_uid": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "project_id", "rating", "comment", "reviewer_id", "reviewer_name", "target_uid", "created_at"]
+    },
+    "Payment": {
+      "title": "Escrow Transaction",
+      "description": "Secure budget deposit with a 10% platform fee and escrow release status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "project_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "fee": { "type": "number" },
+        "freelancer_amount": { "type": "number" },
+        "escrow_status": { "type": "string", "enum": ["held", "released", "refunded"] },
+        "client_id": { "type": "string" },
+        "freelancer_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "project_id", "amount", "fee", "freelancer_amount", "escrow_status", "client_id", "freelancer_id", "created_at"]
+    },
+    "Message": {
+      "title": "Chat Room Text Message",
+      "description": "One realtime instant message exchanged within a chat conversation channel.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chat_id": { "type": "string" },
+        "sender_id": { "type": "string" },
+        "sender_name": { "type": "string" },
+        "text": { "type": "string" },
+        "file_url": { "type": "string" },
+        "file_name": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "sender_id", "sender_name", "text", "created_at"]
+    },
+    "ChatRoom": {
+      "title": "Realtime Chat Channel",
+      "description": "Real-time communication room for clients and freelancers regarding a specific project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "project_id": { "type": "string" },
+        "project_title": { "type": "string" },
+        "client_id": { "type": "string" },
+        "freelancer_id": { "type": "string" },
+        "client_name": { "type": "string" },
+        "freelancer_name": { "type": "string" },
+        "last_message": { "type": "string" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "project_id", "client_id", "freelancer_id", "client_name", "freelancer_name", "updated_at"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Private and public identity accounts indexed by user firebase UID."
+    },
+    "profiles/{profileId}": {
+      "schema": "Profile",
+      "description": "Developer portfolio listings keyed by username or generated unique string."
+    },
+    "projects/{projectId}": {
+      "schema": "Project",
+      "description": "Freelance jobs posted by platform clients."
+    },
+    "proposals/{proposalId}": {
+      "schema": "Proposal",
+      "description": "Escrow proposal bids corresponding to active projects."
+    },
+    "reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Ratings left on project deliverables."
+    },
+    "payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Detailed escrow transaction ledgers tracking the status of holds and releases."
+    },
+    "chats/{chatId}": {
+      "schema": "ChatRoom",
+      "description": "Active realtime conversations between clients and freelancers."
+    },
+    "chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Chat log records associated with a conversation channel."
+    }
+  }
+}

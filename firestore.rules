@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVirtual(userId) {
+      return userId != null && userId.matches('^virtual_.*');
+    }
+
+    function isOwner(userId) {
+      return (isSignedIn() && request.auth.uid == userId) || isVirtual(userId);
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+    }
+
+    function isVerifiedDev() {
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verified == true);
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // USERS collection rules
+    match /users/{userId} {
+      allow read: if true; // Public directories & reputation checking
+      allow create: if (isSignedIn() && isOwner(userId)) || isVirtual(userId);
+      allow update: if (isSignedIn() && isOwner(userId)) || isVirtual(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // PROFILES collection rules
+    match /profiles/{profileId} {
+      allow read: if true; // Publicly explorables
+      allow create, update: if (isSignedIn() && (request.auth.uid == profileId || isOwner(request.resource.data.user_id) || isAdmin())) || isVirtual(profileId);
+      allow delete: if isAdmin();
+    }
+
+    // PROJECTS collection rules
+    match /projects/{projectId} {
+      allow read: if true; // Public listings
+      allow create: if (isSignedIn() && incoming().client_id == request.auth.uid) || isVirtual(incoming().client_id);
+      allow update: if (isSignedIn() && (
+        isOwner(existing().client_id) ||
+        isOwner(existing().freelancer_id) ||
+        isAdmin()
+      )) || isVirtual(existing().client_id) || (existing().freelancer_id != null && isVirtual(existing().freelancer_id));
+      allow delete: if (isSignedIn() && (isOwner(existing().client_id) || isAdmin())) || isVirtual(existing().client_id);
+    }
+
+    // PROPOSALS collection rules
+    match /proposals/{proposalId} {
+      allow read: if true; // Anyone can read proposals to list/manage bids
+      allow create: if (isSignedIn() && isVerifiedDev() && incoming().freelancer_id == request.auth.uid) || isVirtual(incoming().freelancer_id);
+      allow update: if (isSignedIn() && (
+        incoming().freelancer_id == request.auth.uid || 
+        // Project client can accept or reject proposal
+        exists(/databases/$(database)/documents/projects/$(existing().project_id)) && 
+        get(/databases/$(database)/documents/projects/$(existing().project_id)).data.client_id == request.auth.uid ||
+        isAdmin()
+      )) || isVirtual(existing().freelancer_id) || (existing().project_id != null && exists(/databases/$(database)/documents/projects/$(existing().project_id)) && isVirtual(get(/databases/$(database)/documents/projects/$(existing().project_id)).data.client_id));
+      allow delete: if (isSignedIn() && (existing().freelancer_id == request.auth.uid || isAdmin())) || isVirtual(existing().freelancer_id);
+    }
+
+    // REVIEWS collection rules
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if (isSignedIn() && incoming().reviewer_id == request.auth.uid) || isVirtual(incoming().reviewer_id);
+      allow update: if (isSignedIn() && (existing().reviewer_id == request.auth.uid || isAdmin())) || isVirtual(existing().reviewer_id);
+      allow delete: if isAdmin();
+    }
+
+    // PAYMENTS collection rules
+    match /payments/{paymentId} {
+      allow read: if (isSignedIn() && (
+        resource.data.client_id == request.auth.uid || 
+        resource.data.freelancer_id == request.auth.uid || 
+        isAdmin()
+      )) || isVirtual(resource.data.client_id) || isVirtual(resource.data.freelancer_id);
+      allow create: if (isSignedIn() && incoming().client_id == request.auth.uid) || isVirtual(incoming().client_id);
+      allow update: if (isSignedIn() && (
+        existing().client_id == request.auth.uid || 
+        isAdmin()
+      )) || isVirtual(existing().client_id) || isVirtual(existing().freelancer_id);
+      allow delete: if isAdmin();
+    }
+
+    // CHATS collection rules
+    match /chats/{chatId} {
+      allow read: if (isSignedIn() && (
+        resource.data.client_id == request.auth.uid || 
+        resource.data.freelancer_id == request.auth.uid ||
+        isAdmin()
+      )) || isVirtual(resource.data.client_id) || isVirtual(resource.data.freelancer_id);
+      allow create, update: if isSignedIn() || isVirtual(incoming().client_id) || isVirtual(incoming().freelancer_id);
+      allow delete: if isAdmin();
+    }
+
+    // MESSAGES list and entries inside chatrooms
+    match /chats/{chatId}/messages/{messageId} {
+      allow read: if true;
+      allow create: if (isSignedIn() && incoming().sender_id == request.auth.uid) || isVirtual(incoming().sender_id);
+      allow update, delete: if isAdmin();
+    }
+  }
+}
